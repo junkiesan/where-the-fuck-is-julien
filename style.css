@@ -39,8 +39,8 @@ h1 {
   background: #ffe5b4;
 }
 
-/* Optional: round marker images (if using icons with images) */
-.leaflet-marker-icon {
+/* round markers */
+.round-icon {
   border-radius: 50%;
   border: 2px solid #fff;
 }

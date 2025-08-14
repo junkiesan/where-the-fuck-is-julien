@@ -6,14 +6,17 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19
 }).addTo(map);
 
+// Replace this with YOUR IMAGE URL
+const julienImage = "https://YOUR-IMAGE-LINK.png";
+
 const julienIcon = L.icon({
-  iconUrl: 'https://i.imgur.com/4NZ6uLY.png', // example head icon
+  iconUrl: julienImage,
   iconSize: [40, 40],
   className: 'round-icon'
 });
 
 const currentIcon = L.icon({
-  iconUrl: 'https://i.imgur.com/4NZ6uLY.png',
+  iconUrl: julienImage,
   iconSize: [50, 50],
   className: 'round-icon'
 });
@@ -42,7 +45,8 @@ async function fetchAndRenderCSV() {
     const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
     const points = [];
 
-    for (const row of parsed.data) {
+    for (let i = 0; i < parsed.data.length; i++) {
+      const row = parsed.data[i];
       const lieu = row.lieu?.trim();
       const titre = row.titre?.trim();
       const date = row.date?.trim();
@@ -58,10 +62,6 @@ async function fetchAndRenderCSV() {
         markers.push(marker);
         points.push(coords);
 
-        currentMarker = L.marker(coords, { icon: currentIcon })
-          .addTo(map)
-          .bindPopup(`<b>${titre} (Current)</b><br>${date}<br>${description}`);
-
         const li = document.createElement('li');
         li.innerHTML = `<b>${date} — ${titre}</b><br>${lieu}<br>${description}`;
         li.addEventListener('click', () => {
@@ -69,6 +69,13 @@ async function fetchAndRenderCSV() {
           setTimeout(() => marker.openPopup(), 1600);
         });
         timelineList.appendChild(li);
+
+        // Last row = current location
+        if (i === parsed.data.length - 1) {
+          currentMarker = L.marker(coords, { icon: currentIcon })
+            .addTo(map)
+            .bindPopup(`<b>${titre} (Current)</b><br>${date}<br>${description}`);
+        }
       }
     }
 
