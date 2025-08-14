@@ -34,7 +34,7 @@ async function fetchAndRender() {
       const icon = L.icon({
         iconUrl: i === parsed.data.length-1 ? 'img/julien-current.png' : 'img/julien.png',
         iconSize: [40, 40],
-        className: 'rounded-icon'
+        className: 'rounded-icon' // CSS will make it round
       });
 
       const marker = L.marker(latlng, { icon }).addTo(map).bindPopup(`<b>${row.titre}</b><br>${row.date}<br>${row.description}`);
@@ -46,7 +46,6 @@ async function fetchAndRender() {
       stepDiv.innerHTML = `<h3>${row.titre}</h3><p>${row.date}</p><p>${row.description}</p>`;
       stepDiv.onclick = () => {
         map.setView(latlng, 6, { animate: true });
-        // Highlight active step
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
         stepDiv.classList.add('active');
         marker.openPopup();

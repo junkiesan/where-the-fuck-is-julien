@@ -2,7 +2,6 @@ body {
   font-family: Arial, sans-serif;
   background: #1e1e1e;
   color: white;
-  text-align: center;
   margin: 0;
   padding: 0;
 }
@@ -16,18 +15,18 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 20px;
+  margin: 20px 0;
 }
 
 .step {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 15px;
   padding: 15px;
-  margin: 10px;
+  margin: 10px 0;
   width: 300px;
   cursor: pointer;
   transition: transform 0.3s, background 0.3s;
-  text-align: left;
+  text-align: center;
 }
 
 .step:hover {
@@ -35,5 +34,9 @@ body {
 }
 
 .step.active {
-  background: rgba(241, 196, 15, 0.2);
+  background: rgba(241, 196, 15, 0.3);
+}
+
+.rounded-icon img {
+  border-radius: 50%;
 }
