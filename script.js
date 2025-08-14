@@ -59,7 +59,6 @@ const timelineList = document.getElementById('timeline-list');
 
 async function fetchAndRenderCSV() {
   try {
-    // Remove old markers
     markers.forEach(m => map.removeLayer(m));
     if (currentMarker) map.removeLayer(currentMarker);
     markers = [];
@@ -80,25 +79,23 @@ async function fetchAndRenderCSV() {
 
       const coords = await geocode(lieu);
       if (coords) {
-        // Regular marker
         const marker = L.marker(coords, { icon: julienIcon })
           .addTo(map)
           .bindPopup(`<b>${titre}</b><br>${date}<br>${description}`);
         markers.push(marker);
         points.push(coords);
 
-        // Update current location marker
         if (currentMarker) map.removeLayer(currentMarker);
         currentMarker = L.marker(coords, { icon: currentIcon })
           .addTo(map)
           .bindPopup(`<b>${titre} (Current)</b><br>${date}<br>${description}`);
 
-        // Add to timeline
         const li = document.createElement('li');
         li.innerHTML = `<b>${date} — ${titre}</b><br>${lieu}<br>${description}`;
         li.addEventListener('click', () => {
-          map.setView(coords, 8);
-          marker.openPopup();
+          // Smooth fly-to
+          map.flyTo(coords, 8, { duration: 1.5 });
+          setTimeout(() => marker.openPopup(), 1600);
         });
         timelineList.appendChild(li);
       }
@@ -116,8 +113,5 @@ async function fetchAndRenderCSV() {
   }
 }
 
-// ================================
-// INITIAL FETCH + AUTO REFRESH
-// ================================
 fetchAndRenderCSV();
 setInterval(fetchAndRenderCSV, refreshInterval);
