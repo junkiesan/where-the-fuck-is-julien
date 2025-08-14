@@ -2,7 +2,7 @@
 // CONFIG
 // ================================
 const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSiSiZP3r783Jcfoi6vPq03yNaGD30a6PdTK4mh06WpCb0wxIuhufWWtw82TdwU1iKoGYzElY0t1JfW/pub?gid=0&single=true&output=csv";
-const refreshInterval = 5 * 60 * 1000; // 5 minutes
+const refreshInterval = 5 * 60 * 1000; // 5 min
 
 // ================================
 // MAP SETUP
@@ -56,6 +56,7 @@ async function geocode(place) {
 // FETCH AND RENDER CSV
 // ================================
 const timelineList = document.getElementById('timeline-list');
+const etapesList = document.getElementById('etapes-list');
 
 async function fetchAndRenderCSV() {
   try {
@@ -63,6 +64,7 @@ async function fetchAndRenderCSV() {
     if (currentMarker) map.removeLayer(currentMarker);
     markers = [];
     timelineList.innerHTML = '';
+    etapesList.innerHTML = '';
 
     const res = await fetch(sheetURL);
     const csvText = await res.text();
@@ -79,6 +81,7 @@ async function fetchAndRenderCSV() {
 
       const coords = await geocode(lieu);
       if (coords) {
+        // ====== MAP MARKERS ======
         const marker = L.marker(coords, { icon: julienIcon })
           .addTo(map)
           .bindPopup(`<b>${titre}</b><br>${date}<br>${description}`);
@@ -90,19 +93,36 @@ async function fetchAndRenderCSV() {
           .addTo(map)
           .bindPopup(`<b>${titre} (Current)</b><br>${date}<br>${description}`);
 
+        // ====== TIMELINE LIST ======
         const li = document.createElement('li');
         li.innerHTML = `<b>${date} — ${titre}</b><br>${lieu}<br>${description}`;
         li.addEventListener('click', () => {
-          // Smooth fly-to
           map.flyTo(coords, 8, { duration: 1.5 });
           setTimeout(() => marker.openPopup(), 1600);
         });
         timelineList.appendChild(li);
+
+        // ====== MES ÉTAPES CARDS ======
+        const card = document.createElement('div');
+        card.className = 'etape-card';
+        card.innerHTML = `<b>${date} — ${titre}</b><br>${lieu}<br>${description}`;
+        etapesList.appendChild(card);
       }
     }
 
     if (points.length > 0) {
-      L.polyline(points, { color: 'red' }).addTo(map);
+      // Animated adventure path
+      L.polyline.antPath(points, {
+        "delay": 400,
+        "dashArray": [15,15],
+        "weight": 5,
+        "color": "#FF7F00",
+        "pulseColor": "#FFFFFF",
+        "paused": false,
+        "reverse": false,
+        "hardwareAccelerated": true
+      }).addTo(map);
+
       map.fitBounds(points);
     } else {
       console.warn("⚠️ No valid points found — check your CSV data");
