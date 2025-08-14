@@ -2,6 +2,7 @@
 // CONFIG
 // ================================
 const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSiSiZP3r783Jcfoi6vPq03yNaGD30a6PdTK4mh06WpCb0wxIuhufWWtw82TdwU1iKoGYzElY0t1JfW/pub?gid=0&single=true&output=csv";
+const refreshInterval = 5 * 60 * 1000; // 5 minutes
 
 // ================================
 // MAP SETUP
@@ -13,11 +14,21 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 const julienIcon = L.icon({
-  iconUrl: 'img/julien.png', // your marker image
+  iconUrl: 'img/julien.png',
   iconSize: [40, 40],
   iconAnchor: [20, 40],
   popupAnchor: [0, -40]
 });
+
+const currentIcon = L.icon({
+  iconUrl: 'img/julien-current.png', 
+  iconSize: [50, 50],
+  iconAnchor: [25, 50],
+  popupAnchor: [0, -50]
+});
+
+let currentMarker = null;
+let markers = [];
 
 // ================================
 // HELPER FUNCTIONS
@@ -42,14 +53,20 @@ async function geocode(place) {
 }
 
 // ================================
-// FETCH AND PARSE CSV
+// FETCH AND RENDER CSV
 // ================================
 const timelineList = document.getElementById('timeline-list');
-const markers = [];
 
-fetch(sheetURL)
-  .then(res => res.text())
-  .then(async csvText => {
+async function fetchAndRenderCSV() {
+  try {
+    // Remove old markers
+    markers.forEach(m => map.removeLayer(m));
+    if (currentMarker) map.removeLayer(currentMarker);
+    markers = [];
+    timelineList.innerHTML = '';
+
+    const res = await fetch(sheetURL);
+    const csvText = await res.text();
     const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
     const points = [];
 
@@ -63,18 +80,24 @@ fetch(sheetURL)
 
       const coords = await geocode(lieu);
       if (coords) {
-        // Add marker
+        // Regular marker
         const marker = L.marker(coords, { icon: julienIcon })
           .addTo(map)
           .bindPopup(`<b>${titre}</b><br>${date}<br>${description}`);
         markers.push(marker);
         points.push(coords);
 
+        // Update current location marker
+        if (currentMarker) map.removeLayer(currentMarker);
+        currentMarker = L.marker(coords, { icon: currentIcon })
+          .addTo(map)
+          .bindPopup(`<b>${titre} (Current)</b><br>${date}<br>${description}`);
+
         // Add to timeline
         const li = document.createElement('li');
         li.innerHTML = `<b>${date} — ${titre}</b><br>${lieu}<br>${description}`;
         li.addEventListener('click', () => {
-          map.setView(coords, 8); // zoom to marker
+          map.setView(coords, 8);
           marker.openPopup();
         });
         timelineList.appendChild(li);
@@ -87,5 +110,14 @@ fetch(sheetURL)
     } else {
       console.warn("⚠️ No valid points found — check your CSV data");
     }
-  })
-  .catch(err => console.error("❌ Error fetching or parsing CSV:", err));
+
+  } catch (err) {
+    console.error("❌ Error fetching or parsing CSV:", err);
+  }
+}
+
+// ================================
+// INITIAL FETCH + AUTO REFRESH
+// ================================
+fetchAndRenderCSV();
+setInterval(fetchAndRenderCSV, refreshInterval);
