@@ -1,30 +1,29 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Where the f*** is Julien?</title>
-  <link rel="stylesheet" href="style.css">
-
-  <!-- Leaflet CSS -->
+  <meta charset="UTF-8">
+  <title>Where the fuck is Julien?</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Where the fuck is Julien?</h1>
+
+  <div id="map"></div>
+
+  <section id="steps">
+    <h2>Mes étapes</h2>
+    <ul id="step-list"></ul>
+  </section>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- Leaflet AntPath plugin -->
-  <script src="https://unpkg.com/leaflet-ant-path@1.1.2/dist/leaflet-ant-path.min.js"></script>
+  <!-- Leaflet AntPath for animated line -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-ant-path@1.1.2/dist/leaflet-ant-path.min.js"></script>
 
-  <!-- PapaParse -->
+  <!-- PapaParse for CSV -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-</head>
-<body>
-  <h1>Where the f*** is Julien?</h1>
-  <div id="map"></div>
-  <div id="steps">
-    <h2>Mes étapes</h2>
-    <ul id="step-list"></ul>
-  </div>
 
   <script src="script.js"></script>
 </body>

@@ -1,85 +1,52 @@
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSiSiZP3r783Jcfoi6vPq03yNaGD30a6PdTK4mh06WpCb0wxIuhufWWtw82TdwU1iKoGYzElY0t1JfW/pub?gid=0&single=true&output=csv";
+const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSiSiZP3r783Jcfoi6vPq03yNaGD30a6PdTK4mh06WpCb0wxIuhufWWtw82TdwU1iKoGYzElY0t1JfW/pub?gid=0&single=true&output=csv";
 
-// Icons
-const julienIcon = L.icon({
-  iconUrl: "img/julien.png",
-  iconSize: [40, 40],
-  className: 'round-icon'
-});
-const currentIcon = L.icon({
-  iconUrl: "img/julien-current.png",
-  iconSize: [50, 50],
-  className: 'round-icon'
-});
-
-// Map
-const map = L.map("map").setView([20, 0], 2);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19
+const map = L.map('map').setView([48.8566, 2.3522], 3); // start centered on Paris
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
 }).addTo(map);
-
-let coordsArray = [];
-
-async function geocode(place) {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place)}`;
-  const response = await fetch(url, { headers: { "User-Agent": "julien-map" }});
-  const data = await response.json();
-  if (data && data.length > 0) {
-    return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-  }
-  return null;
-}
 
 async function fetchAndRender() {
   try {
-    const response = await fetch(SHEET_URL);
+    const response = await fetch(sheetUrl);
     const csvText = await response.text();
-    const parsed = Papa.parse(csvText.trim(), { header: true });
-    const rows = parsed.data.filter(r => r.lieu && r.titre);
+    const parsed = Papa.parse(csvText, { header: true });
 
-    const stepList = document.getElementById("step-list");
+    const points = [];
 
-    for (let i = 0; i < rows.length; i++) {
-      const { lieu, titre, date, description } = rows[i];
-      const coords = await geocode(lieu);
+    for (const row of parsed.data) {
+      if (!row.lieu) continue;
 
-      if (coords) {
-        coordsArray.push(coords);
+      const geocode = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(row.lieu)}`);
+      const geoData = await geocode.json();
+      if (!geoData[0]) continue;
 
-        // Choose icon
-        const icon = (i === rows.length - 1) ? currentIcon : julienIcon;
+      const lat = parseFloat(geoData[0].lat);
+      const lon = parseFloat(geoData[0].lon);
+      points.push([lat, lon]);
 
-        const marker = L.marker(coords, { icon }).addTo(map);
-        marker.bindPopup(`<b>${titre}</b><br>${lieu}<br>${date}<br>${description}`);
-
-        // Add to step list
-        const li = document.createElement("li");
-        li.textContent = `${titre} (${lieu}) - ${date}`;
-        li.addEventListener("click", () => {
-          map.setView(coords, 8);
-          marker.openPopup();
-        });
-        stepList.appendChild(li);
-      }
+      // Add marker
+      L.marker([lat, lon], {
+        icon: L.icon({
+          iconUrl: row.current === "yes" ? "img/julien-current.png" : "img/julien.png",
+          iconSize: [50, 50],
+          className: "step-marker"
+        })
+      }).addTo(map).bindPopup(`<b>${row.titre}</b><br>${row.description}`);
+      
+      // Add step to list
+      const li = document.createElement("li");
+      li.innerHTML = `<img src="${row.current === "yes" ? "img/julien-current.png" : "img/julien.png"}" class="step-image">${row.titre} - ${row.date}`;
+      li.onclick = () => map.setView([lat, lon], 6);
+      document.getElementById("step-list").appendChild(li);
     }
 
-    // Draw animated line
-    if (coordsArray.length > 1) {
-      L.polyline.antPath(coordsArray, {
-        color: "#ff0000",
-        weight: 3,
-        opacity: 0.6,
-        dashArray: [10, 20],
-        pulseColor: "#ffaaaa"
-      }).addTo(map);
-    }
-
-    if (coordsArray.length) {
-      map.fitBounds(coordsArray);
+    if (points.length > 1) {
+      L.polyline.antPath(points, { color: "red", weight: 4, delay: 400, dashArray: [10,20], pulseColor: "#fff" }).addTo(map);
+      map.fitBounds(points);
     }
 
   } catch (err) {
-    console.error("❌ Error:", err);
+    console.error("❌ Error fetching or parsing CSV:", err);
   }
 }
 
