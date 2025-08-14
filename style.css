@@ -6,58 +6,54 @@ body {
   padding: 0;
 }
 
-#map {
-  height: 60vh;
-  width: 100%;
-}
-
-#steps {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+h1 {
+  text-align: center;
   margin: 20px 0;
 }
 
-.step {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 15px;
-  padding: 15px;
-  margin: 10px 0;
-  width: 300px;
-  cursor: pointer;
-  transition: transform 0.3s, background 0.3s;
-  text-align: center;
+#map {
+  width: 100%;
+  height: 60vh;
 }
 
-.step:hover {
-  transform: scale(1.05);
-}
-
-.step.active {
-  background: rgba(241, 196, 15, 0.3);
-}
-
-.rounded-icon img {
-  border-radius: 50%;
+#steps {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 10px;
 }
 
 #steps .step {
-  background: rgba(255, 255, 255, 0.95); /* step card background */
+  background: #fdf6e3;
   color: #333;
-  padding: 10px 15px;
+  padding: 12px 15px;
   margin: 10px 0;
-  border-radius: 8px;
-  text-align: center; /* center title and text */
+  border-radius: 10px;
+  text-align: center;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#steps .step:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+#steps .step.active {
+  border: 2px solid #f39c12;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2);
 }
 
 #steps .step h3 {
   margin: 0 0 5px 0;
   font-size: 1.2em;
-  text-align: center; /* ensure title is centered */
 }
 
 #steps .step p {
   margin: 2px 0;
-  text-align: center;
+}
+
+.leaflet-marker-icon {
+  border-radius: 50%;
+  border: 2px solid #fff;
 }
