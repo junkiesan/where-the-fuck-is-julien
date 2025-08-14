@@ -15,26 +15,39 @@ const julienIcon = L.icon({
   popupAnchor: [0, -40]
 });
 
-// Load and parse CSV
 fetch(sheetURL)
   .then(res => {
+    console.log("HTTP status:", res.status);
     if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
     return res.text();
   })
   .then(csvText => {
-    if (!csvText.trim()) throw new Error("CSV is empty — check if your Google Sheet is published & public");
+    console.log("📄 Raw CSV from Google Sheets:");
+    console.log(csvText);
 
+    if (!csvText.trim()) {
+      throw new Error("CSV is empty — check if your Google Sheet is published & public");
+    }
+
+    // Split rows and log them
     const rows = csvText.split("\n").map(r => r.trim()).filter(r => r.length > 0);
+    console.log("🔍 Parsed rows:", rows);
+
+    // Get headers and log them
     const headers = rows[0].split(",");
+    console.log("📌 Headers detected:", headers);
 
     const points = [];
 
     for (let i = 1; i < rows.length; i++) {
       const cols = rows[i].split(",");
+      console.log(`Row ${i} columns:`, cols);
+
       if (cols.length < 5) {
-        console.warn(`Skipping invalid row: ${rows[i]}`);
+        console.warn(`⚠️ Skipping row ${i} (not enough columns)`);
         continue;
       }
+
       const lat = parseFloat(cols[0]);
       const lng = parseFloat(cols[1]);
       const titre = cols[2];
@@ -47,12 +60,16 @@ fetch(sheetURL)
           .bindPopup(`<b>${titre}</b><br>${date}<br>${description}`);
 
         points.push([lat, lng]);
+      } else {
+        console.warn(`⚠️ Skipping row ${i} — invalid lat/lng`);
       }
     }
 
     if (points.length > 0) {
       L.polyline(points, { color: 'red' }).addTo(map);
       map.fitBounds(points);
+    } else {
+      console.warn("⚠️ No valid points found — check your data format");
     }
   })
   .catch(err => {
