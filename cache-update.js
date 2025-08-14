@@ -3,7 +3,7 @@ import fs from 'fs';
 import fetch from 'node-fetch';
 
 // URL CSV public de ton Google Sheet
-const sheetURL = "https://docs.google.com/spreadsheets/d/e/173gsf8CUdvsPcMOWT-wZqiDwXaQMrlE9DblT6BumLAs/pub?gid=0&single=true&output=csv";
+const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSiSiZP3r783Jcfoi6vPq03yNaGD30a6PdTK4mh06WpCb0wxIuhufWWtw82TdwU1iKoGYzElY0t1JfW/pubhtml?gid=0&single=true";
 
 // Fonction géocodage
 async function geocode(lieu) {
