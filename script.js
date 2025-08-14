@@ -45,7 +45,7 @@ async function fetchAndRender() {
       stepDiv.className = 'step';
       stepDiv.innerHTML = `<h3>${row.titre}</h3><p>${row.date}</p><p>${row.description}</p>`;
       stepDiv.onclick = () => {
-        map.setView(latlng, 6, { animate: true });
+        map.flyTo(latlng, 8, { animate: true }); // zoom level 8 smoothly
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
         stepDiv.classList.add('active');
         marker.openPopup();
