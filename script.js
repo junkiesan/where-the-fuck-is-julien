@@ -129,9 +129,14 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 function deg2rad(deg) {
   return deg * (Math.PI/180);
 }
-fetchAndParseCSV().then(rows => {
-  addMarkers(rows);
-  drawTrajectory(rows);
-  calculateKPIs(rows); // ✅ Add this line
-});
+fetch(csvUrl)
+  .then(res => res.text())
+  .then(csvText => {
+    const rows = parseCSV(csvText);
+    addMarkers(rows);
+    drawTrajectory(rows);
+    renderSteps(rows);
+    calculateKPIs(rows);
+  })
+  .catch(err => console.error('❌ Error fetching or parsing CSV:', err));
 fetchAndRender();
