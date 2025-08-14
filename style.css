@@ -62,8 +62,3 @@ h2 {
   border-radius: 50%;
   border: 2px solid #fff;
 }
-
-.marker-icon-round { border-radius:50%; }
-#steps { background:#fff8e7; padding:15px; border-radius:10px; }
-.step { margin-bottom:10px; cursor:pointer; padding:10px; background:white; text-align:center; border-radius:6px; transition:transform 0.2s;}
-.step:hover { transform:scale(1.05); background:#ffe;}
