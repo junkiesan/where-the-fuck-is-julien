@@ -9,8 +9,38 @@
 </head>
 <body>
   <h1>Where the f*** is Julien?</h1>
-  <div id="map"></div>
+  <div id="map" style="height: 600px;"></div>
+    <div id="timeline">
+    <h2>Mes étapes</h2>
+    <ul id="timeline-list"></ul>
+    </div>
 
+    <style>
+    #timeline {
+        max-width: 800px;
+        margin: 20px auto;
+        font-family: sans-serif;
+    }
+    #timeline h2 {
+        text-align: center;
+    }
+    #timeline-list {
+        list-style: none;
+        padding: 0;
+    }
+    #timeline-list li {
+        background: #f0f0f0;
+        margin: 5px 0;
+        padding: 10px 15px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    #timeline-list li b {
+        display: block;
+        font-size: 1.1em;
+        margin-bottom: 4px;
+    }
+    </style>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="script.js"></script>
 </body>
