@@ -13,7 +13,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 const julienIcon = L.icon({
-  iconUrl: 'img/julien.png',
+  iconUrl: 'img/julien.png', // your marker image
   iconSize: [40, 40],
   iconAnchor: [20, 40],
   popupAnchor: [0, -40]
@@ -23,12 +23,10 @@ const julienIcon = L.icon({
 // HELPER FUNCTIONS
 // ================================
 async function geocode(place) {
-  // Check cache first
   const cacheKey = `geo:${place}`;
   const cached = localStorage.getItem(cacheKey);
   if (cached) return JSON.parse(cached);
 
-  // Call Nominatim
   const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place)}`;
   const res = await fetch(url, { headers: { 'User-Agent': 'JulienMap/1.0' } });
   const data = await res.json();
@@ -46,10 +44,12 @@ async function geocode(place) {
 // ================================
 // FETCH AND PARSE CSV
 // ================================
+const timelineList = document.getElementById('timeline-list');
+const markers = [];
+
 fetch(sheetURL)
   .then(res => res.text())
   .then(async csvText => {
-    // Use PapaParse for robust CSV parsing
     const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
     const points = [];
 
@@ -63,10 +63,21 @@ fetch(sheetURL)
 
       const coords = await geocode(lieu);
       if (coords) {
-        L.marker(coords, { icon: julienIcon })
+        // Add marker
+        const marker = L.marker(coords, { icon: julienIcon })
           .addTo(map)
           .bindPopup(`<b>${titre}</b><br>${date}<br>${description}`);
+        markers.push(marker);
         points.push(coords);
+
+        // Add to timeline
+        const li = document.createElement('li');
+        li.innerHTML = `<b>${date} — ${titre}</b><br>${lieu}<br>${description}`;
+        li.addEventListener('click', () => {
+          map.setView(coords, 8); // zoom to marker
+          marker.openPopup();
+        });
+        timelineList.appendChild(li);
       }
     }
 
