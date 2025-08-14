@@ -6,17 +6,15 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19
 }).addTo(map);
 
-// Replace this with YOUR IMAGE URL
-const julienImage = "https://YOUR-IMAGE-LINK.png";
-
+// ✅ Local images in same folder as index.html
 const julienIcon = L.icon({
-  iconUrl: julienImage,
+  iconUrl: "img/julien.png",
   iconSize: [40, 40],
   className: 'round-icon'
 });
 
 const currentIcon = L.icon({
-  iconUrl: julienImage,
+  iconUrl: "img/julien-current.png",
   iconSize: [50, 50],
   className: 'round-icon'
 });
@@ -56,9 +54,11 @@ async function fetchAndRenderCSV() {
 
       const coords = await geocode(lieu);
       if (coords) {
-        const marker = L.marker(coords, { icon: julienIcon })
+        const icon = (i === parsed.data.length - 1) ? currentIcon : julienIcon;
+        const marker = L.marker(coords, { icon })
           .addTo(map)
           .bindPopup(`<b>${titre}</b><br>${date}<br>${description}`);
+        
         markers.push(marker);
         points.push(coords);
 
@@ -69,26 +69,19 @@ async function fetchAndRenderCSV() {
           setTimeout(() => marker.openPopup(), 1600);
         });
         timelineList.appendChild(li);
-
-        // Last row = current location
-        if (i === parsed.data.length - 1) {
-          currentMarker = L.marker(coords, { icon: currentIcon })
-            .addTo(map)
-            .bindPopup(`<b>${titre} (Current)</b><br>${date}<br>${description}`);
-        }
       }
     }
 
     if (points.length > 0) {
       L.polyline.antPath(points, {
-        "delay": 400,
-        "dashArray": [15,15],
-        "weight": 5,
-        "color": "#FF7F00",
-        "pulseColor": "#FFFFFF",
-        "paused": false,
-        "reverse": false,
-        "hardwareAccelerated": true
+        delay: 400,
+        dashArray: [15, 15],
+        weight: 5,
+        color: "#FF7F00",
+        pulseColor: "#FFFFFF",
+        paused: false,
+        reverse: false,
+        hardwareAccelerated: true
       }).addTo(map);
 
       map.fitBounds(points);
