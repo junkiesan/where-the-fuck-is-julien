@@ -1,5 +1,9 @@
-// URL of your published CSV
-const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSiSiZP3r783Jcfoi6vPq03yNaGD30a6PdTK4mh06WpCb0wxIuhufWWtw82TdwU1iKoGYzElY0t1JfW/pub?gid=0&single=true&output=csv";
+const map = L.map('map').setView([48.8566, 2.3522], 4);
+
+// Base map layer
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
 
 // Icons
 const julienIcon = L.icon({
@@ -14,64 +18,61 @@ const currentIcon = L.icon({
   className: 'round-icon'
 });
 
-// Init map
-const map = L.map('map').setView([20, 0], 2);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+// Your CSV file from Google Sheets (published as CSV)
+const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSiSiZP3r783Jcfoi6vPq03yNaGD30a6PdTK4mh06WpCb0wxIuhufWWtw82TdwU1iKoGYzElY0t1JfW/pub?gid=0&single=true&output=csv";
 
-// Fetch CSV and render
 async function fetchAndRenderCSV() {
   try {
-    const response = await fetch(sheetUrl);
-    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-
+    const response = await fetch(csvUrl);
     const csvText = await response.text();
+
     const data = Papa.parse(csvText, { header: true }).data;
 
     const points = [];
+    const stepsList = document.getElementById('steps-list');
 
-    data.forEach((row, index) => {
-      if (!row.lat || !row.lng) return;
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      if (!row.lat || !row.lng) continue;
 
       const lat = parseFloat(row.lat);
       const lng = parseFloat(row.lng);
 
       points.push([lat, lng]);
 
-      const marker = L.marker([lat, lng], {
-        icon: index === data.length - 1 ? currentIcon : julienIcon
-      }).addTo(map);
+      const markerIcon = (i === data.length - 1) ? currentIcon : julienIcon;
 
-      marker.bindPopup(`<strong>${row.titre}</strong><br>${row.date}<br>${row.description}`);
+      const marker = L.marker([lat, lng], { icon: markerIcon })
+        .bindPopup(`<b>${row.titre}</b><br>${row.date}<br>${row.description}`)
+        .addTo(map);
 
-      // Add to timeline
+      // Add to steps list
       const li = document.createElement('li');
-      li.textContent = `${row.date} — ${row.titre}`;
+      li.textContent = `${row.titre} (${row.date})`;
       li.addEventListener('click', () => {
-        map.setView([lat, lng], 6);
+        map.flyTo([lat, lng], 8);
         marker.openPopup();
       });
-      document.getElementById('timeline-list').appendChild(li);
-    });
+      stepsList.appendChild(li);
+    }
 
-    // Draw animated path
+    // Draw Indiana Jones style animated path
     if (points.length > 1) {
       L.polyline.antPath(points, {
         "delay": 400,
-        "dashArray": [10, 20],
+        "dashArray": [15, 25],
         "weight": 4,
         "color": "#FF7F00",
         "pulseColor": "#FFFFFF"
       }).addTo(map);
     }
 
-    if (points.length > 0) {
+    if (points.length) {
       map.fitBounds(points);
     }
 
-  } catch (error) {
-    console.error("❌ Error fetching or parsing CSV:", error);
+  } catch (err) {
+    console.error("❌ Error fetching or parsing CSV:", err);
   }
 }
 
