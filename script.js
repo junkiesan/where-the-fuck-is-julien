@@ -82,5 +82,56 @@ async function fetchAndRender() {
     console.error("❌ Error fetching or parsing CSV:", err);
   }
 }
+function calculateKPIs(rows) {
+  if (rows.length < 2) return;
 
+  let totalDistance = 0;
+  let countries = new Set();
+  let firstDate = new Date(rows[0].date);
+  let lastDate = new Date(rows[rows.length - 1].date);
+
+  for (let i = 0; i < rows.length; i++) {
+    // Add country
+    const country = rows[i].lieu.split(',').pop().trim();
+    countries.add(country);
+
+    // Calculate distance to next step
+    if (i < rows.length - 1) {
+      const lat1 = parseFloat(rows[i].lat);
+      const lon1 = parseFloat(rows[i].lng);
+      const lat2 = parseFloat(rows[i + 1].lat);
+      const lon2 = parseFloat(rows[i + 1].lng);
+      totalDistance += haversineDistance(lat1, lon1, lat2, lon2);
+    }
+  }
+
+  const daysPassed = Math.ceil((lastDate - firstDate) / (1000 * 60 * 60 * 24));
+
+  // Update HTML
+  document.getElementById('kpi-distance').innerText = totalDistance.toFixed(0);
+  document.getElementById('kpi-countries').innerText = countries.size;
+  document.getElementById('kpi-days').innerText = daysPassed;
+}
+
+// Haversine formula to calculate distance in KM
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth radius in KM
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+function deg2rad(deg) {
+  return deg * (Math.PI/180);
+}
+fetchAndParseCSV().then(rows => {
+  addMarkers(rows);
+  drawTrajectory(rows);
+  calculateKPIs(rows); // ✅ Add this line
+});
 fetchAndRender();
