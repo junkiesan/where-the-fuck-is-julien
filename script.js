@@ -129,7 +129,7 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 function deg2rad(deg) {
   return deg * (Math.PI/180);
 }
-fetch(csvUrl)
+fetch(sheetUrl)
   .then(res => res.text())
   .then(csvText => {
     const rows = parseCSV(csvText);
