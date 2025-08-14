@@ -9,38 +9,34 @@ h1 {
 }
 
 #map {
-  width: 100%;
   height: 70vh;
+  width: 100%;
 }
 
 #steps {
-  padding: 20px;
-  background: #faf3e0;
+  padding: 15px;
 }
 
-#steps h2 {
-  margin-bottom: 10px;
-}
-
-#steps-list {
+#step-list {
   list-style: none;
   padding: 0;
 }
 
-#steps-list li {
-  background: white;
-  border-radius: 10px;
+#step-list li {
+  background: #f5f5f5;
+  margin: 8px 0;
   padding: 10px;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  border-radius: 10px;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s, background 0.3s;
 }
 
-#steps-list li:hover {
-  transform: scale(1.03);
+#step-list li:hover {
+  background: #e0e0e0;
+  transform: scale(1.02);
 }
 
 .round-icon {
   border-radius: 50%;
+  border: 2px solid white;
 }

@@ -1,9 +1,4 @@
-const map = L.map('map').setView([48.8566, 2.3522], 4);
-
-// Base map layer
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors'
-}).addTo(map);
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSiSiZP3r783Jcfoi6vPq03yNaGD30a6PdTK4mh06WpCb0wxIuhufWWtw82TdwU1iKoGYzElY0t1JfW/pub?gid=0&single=true&output=csv";
 
 // Icons
 const julienIcon = L.icon({
@@ -11,69 +6,81 @@ const julienIcon = L.icon({
   iconSize: [40, 40],
   className: 'round-icon'
 });
-
 const currentIcon = L.icon({
   iconUrl: "img/julien-current.png",
   iconSize: [50, 50],
   className: 'round-icon'
 });
 
-// Your CSV file from Google Sheets (published as CSV)
-const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSiSiZP3r783Jcfoi6vPq03yNaGD30a6PdTK4mh06WpCb0wxIuhufWWtw82TdwU1iKoGYzElY0t1JfW/pub?gid=0&single=true&output=csv";
+// Map
+const map = L.map("map").setView([20, 0], 2);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19
+}).addTo(map);
 
-async function fetchAndRenderCSV() {
+let coordsArray = [];
+
+async function geocode(place) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place)}`;
+  const response = await fetch(url, { headers: { "User-Agent": "julien-map" }});
+  const data = await response.json();
+  if (data && data.length > 0) {
+    return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+  }
+  return null;
+}
+
+async function fetchAndRender() {
   try {
-    const response = await fetch(csvUrl);
+    const response = await fetch(SHEET_URL);
     const csvText = await response.text();
+    const parsed = Papa.parse(csvText.trim(), { header: true });
+    const rows = parsed.data.filter(r => r.lieu && r.titre);
 
-    const data = Papa.parse(csvText, { header: true }).data;
+    const stepList = document.getElementById("step-list");
 
-    const points = [];
-    const stepsList = document.getElementById('steps-list');
+    for (let i = 0; i < rows.length; i++) {
+      const { lieu, titre, date, description } = rows[i];
+      const coords = await geocode(lieu);
 
-    for (let i = 0; i < data.length; i++) {
-      const row = data[i];
-      if (!row.lat || !row.lng) continue;
+      if (coords) {
+        coordsArray.push(coords);
 
-      const lat = parseFloat(row.lat);
-      const lng = parseFloat(row.lng);
+        // Choose icon
+        const icon = (i === rows.length - 1) ? currentIcon : julienIcon;
 
-      points.push([lat, lng]);
+        const marker = L.marker(coords, { icon }).addTo(map);
+        marker.bindPopup(`<b>${titre}</b><br>${lieu}<br>${date}<br>${description}`);
 
-      const markerIcon = (i === data.length - 1) ? currentIcon : julienIcon;
-
-      const marker = L.marker([lat, lng], { icon: markerIcon })
-        .bindPopup(`<b>${row.titre}</b><br>${row.date}<br>${row.description}`)
-        .addTo(map);
-
-      // Add to steps list
-      const li = document.createElement('li');
-      li.textContent = `${row.titre} (${row.date})`;
-      li.addEventListener('click', () => {
-        map.flyTo([lat, lng], 8);
-        marker.openPopup();
-      });
-      stepsList.appendChild(li);
+        // Add to step list
+        const li = document.createElement("li");
+        li.textContent = `${titre} (${lieu}) - ${date}`;
+        li.addEventListener("click", () => {
+          map.setView(coords, 8);
+          marker.openPopup();
+        });
+        stepList.appendChild(li);
+      }
     }
 
-    // Draw Indiana Jones style animated path
-    if (points.length > 1) {
-      L.polyline.antPath(points, {
-        "delay": 400,
-        "dashArray": [15, 25],
-        "weight": 4,
-        "color": "#FF7F00",
-        "pulseColor": "#FFFFFF"
+    // Draw animated line
+    if (coordsArray.length > 1) {
+      L.polyline.antPath(coordsArray, {
+        color: "#ff0000",
+        weight: 3,
+        opacity: 0.6,
+        dashArray: [10, 20],
+        pulseColor: "#ffaaaa"
       }).addTo(map);
     }
 
-    if (points.length) {
-      map.fitBounds(points);
+    if (coordsArray.length) {
+      map.fitBounds(coordsArray);
     }
 
   } catch (err) {
-    console.error("❌ Error fetching or parsing CSV:", err);
+    console.error("❌ Error:", err);
   }
 }
 
-fetchAndRenderCSV();
+fetchAndRender();
