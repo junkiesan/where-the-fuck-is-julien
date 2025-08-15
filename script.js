@@ -20,21 +20,14 @@ async function fetchAndRender() {
     const csvText = await res.text();
     const parsed = Papa.parse(csvText, { header: true });
 
-    // Remove empty rows
     let rows = parsed.data.filter(r => r.lieu && r.date);
-
-    // Parse and attach Date objects
-    rows.forEach(r => {
-      r._dateObj = parseCustomDate(r.date);
-    });
-
-    // Sort by date
+    rows.forEach(r => r._dateObj = parseCustomDate(r.date));
     rows.sort((a, b) => a._dateObj - b._dateObj);
 
     const points = [];
     const markers = [];
     const stepsContainer = document.getElementById('steps');
-    stepsContainer.innerHTML = ""; // clear previous
+    stepsContainer.innerHTML = "";
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
@@ -46,14 +39,36 @@ async function fetchAndRender() {
       row.lng = latlng[1];
 
       const icon = L.icon({
-        iconUrl: i === rows.length-1 ? 'img/julien-current.png' : 'img/julien.png',
+        iconUrl: i === rows.length - 1 ? 'img/julien-current.png' : 'img/julien.png',
         iconSize: [40, 40],
         className: 'rounded-icon'
       });
 
-      const marker = L.marker(latlng, { icon })
-        .addTo(map)
-        .bindPopup(`<b>${row.titre}</b><br>${row.date}<br>${row.description}`);
+      const marker = L.marker(latlng, { icon }).addTo(map);
+      if (i === rows.length - 1) {
+        marker.bindPopup(`<b>I'm here bitch</b>`);
+        marker.openPopup();
+      } else {
+        marker.bindPopup(`<b>${row.titre}</b><br>${row.date}<br>${row.description}`);
+      }
+
+      // Hover effect
+      marker.on('mouseover', function () {
+        this.setIcon(L.icon({
+          iconUrl: i === rows.length - 1 ? 'img/julien-current.png' : 'img/julien.png',
+          iconSize: [50, 50], // bigger on hover
+          className: 'rounded-icon'
+        }));
+      });
+
+      marker.on('mouseout', function () {
+        this.setIcon(L.icon({
+          iconUrl: i === rows.length - 1 ? 'img/julien-current.png' : 'img/julien.png',
+          iconSize: [40, 40], // normal size
+          className: 'rounded-icon'
+        }));
+      });
+
       markers.push(marker);
 
       const stepDiv = document.createElement('div');
@@ -88,24 +103,19 @@ async function fetchAndRender() {
 
 function calculateKPIs(rows) {
   if (rows.length < 2) return;
-
   let totalDistance = 0;
   let countries = new Set();
-
   const firstDate = rows[0]._dateObj;
   const lastDate = rows[rows.length - 1]._dateObj;
 
   for (let i = 0; i < rows.length; i++) {
     const country = rows[i].lieu.split(',').pop().trim();
     countries.add(country);
-
     if (i < rows.length - 1) {
       totalDistance += haversineDistance(rows[i].lat, rows[i].lng, rows[i + 1].lat, rows[i + 1].lng);
     }
   }
-
   const daysPassed = Math.ceil((lastDate - firstDate) / (1000 * 60 * 60 * 24));
-
   document.getElementById('kpi-distance').innerText = totalDistance.toFixed(0);
   document.getElementById('kpi-countries').innerText = countries.size;
   document.getElementById('kpi-days').innerText = daysPassed;
@@ -114,9 +124,8 @@ function calculateKPIs(rows) {
 function parseCustomDate(dateStr) {
   const parts = dateStr.split('/');
   if (parts.length === 3) {
-    // D/M/YYYY
     const day = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1; // 0-based
+    const month = parseInt(parts[1], 10) - 1;
     const year = parseInt(parts[2], 10);
     return new Date(year, month, day);
   }
@@ -127,10 +136,9 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const dLat = deg2rad(lat2 - lat1);
   const dLon = deg2rad(lon2 - lon1);
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   return R * c;
 }
