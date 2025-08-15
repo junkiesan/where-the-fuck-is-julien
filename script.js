@@ -146,6 +146,11 @@ async function fetchAndRender() {
     // Fit map bounds after everything
     if (points.length > 1) map.fitBounds(points);
 
+    if (markers.length > 0) {
+      const lastMarker = markers[markers.length - 1];
+      lastMarker.openPopup();
+    }
+
     calculateKPIs(rows);
 
   } catch (err) {
