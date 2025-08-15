@@ -41,13 +41,13 @@ async function fetchAndRender() {
       const icon = L.icon({
         iconUrl: i === rows.length - 1 ? 'img/julien-current.png' : 'img/julien.png',
         iconSize: [40, 40],
-        className: 'rounded-icon' // only markers get the border
+        className: 'rounded-icon' // only markers have border
       });
 
       const marker = L.marker(latlng, { icon }).addTo(map);
       if (i === rows.length - 1) {
         marker.bindPopup(`<b>I'm here bitch</b>`);
-        marker.openPopup();
+        marker.openPopup(); // autofocus
       } else {
         marker.bindPopup(`<b>${row.titre}</b><br>${row.date}<br>${row.description}`);
       }
@@ -83,8 +83,10 @@ async function fetchAndRender() {
       stepsContainer.appendChild(stepDiv);
     }
 
-    // Draw transport lines with icons
+    // Draw transport lines and icons
     for (let i = 0; i < rows.length - 1; i++) {
+      if (!rows[i].lat || !rows[i + 1].lat) continue; // skip invalid points
+
       const start = [rows[i].lat, rows[i].lng];
       const end = [rows[i + 1].lat, rows[i + 1].lng];
       const transport = rows[i].transport?.toLowerCase();
@@ -116,6 +118,7 @@ async function fetchAndRender() {
           break;
       }
 
+      // Draw line
       L.polyline.antPath([start, end], {
         color: color,
         weight: 4,
@@ -124,7 +127,7 @@ async function fetchAndRender() {
         pulseColor: "#f1c40f"
       }).addTo(map);
 
-      // Transport icon at midpoint (no white border)
+      // Draw transport icon
       if (iconUrl) {
         const midLat = (start[0] + end[0]) / 2;
         const midLng = (start[1] + end[1]) / 2;
@@ -133,11 +136,15 @@ async function fetchAndRender() {
             iconUrl: iconUrl,
             iconSize: [30, 30],
             iconAnchor: [15, 15]
-            // no className, so no white border
-          })
+            // no className → no white border
+          }),
+          interactive: false // so it doesn’t block marker clicks
         }).addTo(map);
       }
     }
+
+    // Fit map bounds after everything
+    if (points.length > 1) map.fitBounds(points);
 
     calculateKPIs(rows);
 
