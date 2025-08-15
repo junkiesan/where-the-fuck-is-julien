@@ -1,36 +1,37 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Where the fuck is Julien?</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roadtrip Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 </head>
 <body>
-  <h1>Where the fuck is Julien?</h1>
-  
-  <div id="kpi-panel" style="background:#fff8e7; padding:15px; border-radius:10px; display:flex; gap:20px; font-family:sans-serif;">
-    <div><strong id="kpi-distance">0</strong> km</div>
-    <div><strong id="kpi-countries">0</strong> pays</div>
-    <div><strong id="kpi-days">0</strong> jours</div>
+  <div class="container">
+    <!-- LEFT PANEL -->
+    <div class="sidebar">
+      <!-- KPIs -->
+      <div class="kpis">
+        <div class="kpi"><strong id="kpi-distance">0</strong> km</div>
+        <div class="kpi"><strong id="kpi-countries">0</strong> pays</div>
+        <div class="kpi"><strong id="kpi-days">0</strong> jours</div>
+      </div>
+      <!-- Steps -->
+      <div class="steps" id="steps">
+        <!-- Steps will be injected here -->
+      </div>
+    </div>
+
+    <!-- MAP -->
+    <div class="map-container">
+      <div id="map"></div>
+    </div>
   </div>
 
-  <div id="map"></div>
-
-  <section id="steps">
-    <h2>Mes étapes</h2>
-    <ul id="step-list"></ul>
-  </section>
-
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- Leaflet AntPath for animated line -->
-  <script src="https://cdn.jsdelivr.net/npm/leaflet-ant-path@1.1.2/dist/leaflet-ant-path.min.js"></script>
-
-  <!-- PapaParse for CSV -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script src="https://unpkg.com/leaflet-ant-path/dist/leaflet-ant-path.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

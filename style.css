@@ -1,64 +1,69 @@
-body {
-  font-family: Arial, sans-serif;
-  background: #ffffff;
-  color: #333;
+html, body {
   margin: 0;
   padding: 0;
+  height: 100%;
+  font-family: Arial, sans-serif;
 }
 
-h1 {
-  text-align: center;
-  margin: 20px 0;
-}
-
-h2 {
+.container {
   display: flex;
-  justify-content: center;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 25%;
+  display: flex;
+  flex-direction: column;
+  background-color: #fdf6e3; /* cream white */
+  border-right: 2px solid #ddd;
+}
+
+.kpis {
+  padding: 20px;
+  text-align: center;
+  background-color: #fff;
+  border-bottom: 2px solid #ddd;
+}
+
+.kpi {
+  font-size: 1.2em;
+  margin: 10px 0;
+}
+
+.steps {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.step {
+  padding: 15px;
+  background: white;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.step:hover {
+  transform: scale(1.02);
+  background-color: #f0f0f0;
+}
+
+.step.active {
+  border: 2px solid #c0392b;
+}
+
+.map-container {
+  width: 75%;
 }
 
 #map {
   width: 100%;
-  height: 60vh;
+  height: 100%;
 }
 
-#steps {
-  max-width: 800px;
-  margin: 20px auto;
-  padding: 10px;
-}
-
-#steps .step {
-  background: #fdf6e3;
-  color: #333;
-  padding: 12px 15px;
-  margin: 10px 0;
-  border-radius: 10px;
-  text-align: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-#steps .step:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-#steps .step.active {
-  border: 2px solid #f39c12;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.2);
-}
-
-#steps .step h3 {
-  margin: 0 0 5px 0;
-  font-size: 1.2em;
-}
-
-#steps .step p {
-  margin: 2px 0;
-}
-
-.leaflet-marker-icon {
+/* Make marker images round */
+.rounded-icon {
   border-radius: 50%;
-  border: 2px solid #fff;
 }
