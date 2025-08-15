@@ -21,23 +21,35 @@ async function fetchAndRender() {
     const parsed = Papa.parse(csvText, { header: true });
 
     const points = [];
+    const enrichedRows = []; // store original row + lat/lng
     const markers = [];
     const stepsContainer = document.getElementById('steps');
 
     for (let i = 0; i < parsed.data.length; i++) {
       const row = parsed.data[i];
+      if (!row.lieu) continue;
+
       const latlng = await geocode(row.lieu);
       if (!latlng) continue;
+
+      // Store enriched row
+      enrichedRows.push({
+        ...row,
+        lat: latlng[0],
+        lng: latlng[1]
+      });
 
       points.push(latlng);
 
       const icon = L.icon({
-        iconUrl: i === parsed.data.length-1 ? 'img/julien-current.png' : 'img/julien.png',
+        iconUrl: i === parsed.data.length - 1 ? 'img/julien-current.png' : 'img/julien.png',
         iconSize: [40, 40],
-        className: 'rounded-icon' // CSS will make it round
+        className: 'rounded-icon'
       });
 
-      const marker = L.marker(latlng, { icon }).addTo(map).bindPopup(`<b>${row.titre}</b><br>${row.date}<br>${row.description}`);
+      const marker = L.marker(latlng, { icon })
+        .addTo(map)
+        .bindPopup(`<b>${row.titre}</b><br>${row.date}<br>${row.description}`);
       markers.push(marker);
 
       // Step list (no images)
@@ -45,7 +57,7 @@ async function fetchAndRender() {
       stepDiv.className = 'step';
       stepDiv.innerHTML = `<h3>${row.titre}</h3><p>${row.date}</p><p>${row.description}</p>`;
       stepDiv.onclick = () => {
-        map.flyTo(latlng, 8, { animate: true }); // zoom level 8 smoothly
+        map.flyTo(latlng, 8, { animate: true });
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
         stepDiv.classList.add('active');
         marker.openPopup();
@@ -53,35 +65,26 @@ async function fetchAndRender() {
       stepsContainer.appendChild(stepDiv);
     }
 
+    // Draw antPath line
     if (points.length > 1) {
-      const curvedPoints = [];
-      for (let i = 0; i < points.length - 1; i++) {
-        const [lat1, lon1] = points[i];
-        const [lat2, lon2] = points[i+1];
-        const midLat = (lat1 + lat2)/2 + (Math.random()-0.5)*0.5;
-        const midLon = (lon1 + lon2)/2 + (Math.random()-0.5)*0.5;
-        curvedPoints.push([lat1, lon1], [midLat, midLon]);
-      }
-      curvedPoints.push(points[points.length-1]);
-
-      L.polyline.antPath(curvedPoints, {
+      L.polyline.antPath(points, {
         color: "#c0392b",
         weight: 4,
         delay: 400,
         dashArray: [15, 20],
-        pulseColor: "#f1c40f",
-        paused: false,
-        reverse: false,
-        hardwareAccelerated: true
+        pulseColor: "#f1c40f"
       }).addTo(map);
-
       map.fitBounds(points);
     }
+
+    // ✅ Calculate KPIs
+    calculateKPIs(enrichedRows);
 
   } catch (err) {
     console.error("❌ Error fetching or parsing CSV:", err);
   }
 }
+
 function calculateKPIs(rows) {
   if (rows.length < 2) return;
 
@@ -91,52 +94,39 @@ function calculateKPIs(rows) {
   let lastDate = new Date(rows[rows.length - 1].date);
 
   for (let i = 0; i < rows.length; i++) {
-    // Add country
+    // Add country from "lieu"
     const country = rows[i].lieu.split(',').pop().trim();
     countries.add(country);
 
-    // Calculate distance to next step
+    // Distance to next point
     if (i < rows.length - 1) {
-      const lat1 = parseFloat(rows[i].lat);
-      const lon1 = parseFloat(rows[i].lng);
-      const lat2 = parseFloat(rows[i + 1].lat);
-      const lon2 = parseFloat(rows[i + 1].lng);
-      totalDistance += haversineDistance(lat1, lon1, lat2, lon2);
+      totalDistance += haversineDistance(
+        rows[i].lat, rows[i].lng,
+        rows[i + 1].lat, rows[i + 1].lng
+      );
     }
   }
 
   const daysPassed = Math.ceil((lastDate - firstDate) / (1000 * 60 * 60 * 24));
 
-  // Update HTML
   document.getElementById('kpi-distance').innerText = totalDistance.toFixed(0);
   document.getElementById('kpi-countries').innerText = countries.size;
   document.getElementById('kpi-days').innerText = daysPassed;
 }
 
-// Haversine formula to calculate distance in KM
 function haversineDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Earth radius in KM
+  const R = 6371;
   const dLat = deg2rad(lat2 - lat1);
   const dLon = deg2rad(lon2 - lon1);
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
+  const a =
+    Math.sin(dLat / 2) ** 2 +
     Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
+    Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 function deg2rad(deg) {
-  return deg * (Math.PI/180);
+  return deg * (Math.PI / 180);
 }
-fetch(sheetUrl)
-  .then(res => res.text())
-  .then(csvText => {
-    const rows = parseCSV(csvText);
-    addMarkers(rows);
-    drawTrajectory(rows);
-    renderSteps(rows);
-    calculateKPIs(rows);
-  })
-  .catch(err => console.error('❌ Error fetching or parsing CSV:', err));
+
 fetchAndRender();
