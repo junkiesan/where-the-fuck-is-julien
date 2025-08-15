@@ -1,37 +1,39 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Roadtrip Tracker</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <meta charset="UTF-8">
+  <title>Where the fuck is Julien?</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <!-- LEFT PANEL -->
-    <div class="sidebar">
-      <!-- KPIs -->
-      <div class="kpis">
-        <div class="kpi"><strong id="kpi-distance">0</strong> km</div>
-        <div class="kpi"><strong id="kpi-countries">0</strong> pays</div>
-        <div class="kpi"><strong id="kpi-days">0</strong> jours</div>
+  <h1>Where the fuck is Julien?</h1>
+
+  <div id="main-container">
+    <!-- Left Column -->
+    <div id="sidebar">
+      <div id="kpi-panel">
+        <div><strong id="kpi-distance">0</strong> km</div>
+        <div><strong id="kpi-countries">0</strong> pays</div>
+        <div><strong id="kpi-days">0</strong> jours</div>
       </div>
-      <!-- Steps -->
-      <div class="steps" id="steps">
-        <!-- Steps will be injected here -->
-      </div>
+
+      <section id="steps">
+        <h2>Mes étapes</h2>
+        <ul id="step-list"></ul>
+      </section>
     </div>
 
-    <!-- MAP -->
-    <div class="map-container">
+    <!-- Right Column -->
+    <div id="map-container">
       <div id="map"></div>
     </div>
   </div>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-  <script src="https://unpkg.com/leaflet-ant-path/dist/leaflet-ant-path.min.js"></script>
+  <!-- JS libraries in correct order -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-ant-path@1.1.2/dist/leaflet-ant-path.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
