@@ -149,6 +149,7 @@ async function fetchAndRender() {
     if (markers.length > 0) {
       const lastMarker = markers[markers.length - 1];
       lastMarker.openPopup();
+      map.flyTo([lastMarker.getLatLng().lat, lastMarker.getLatLng().lng], 8, { animate: true });
     }
 
     calculateKPIs(rows);
