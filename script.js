@@ -20,31 +20,40 @@ async function fetchAndRender() {
     const csvText = await res.text();
     const parsed = Papa.parse(csvText, { header: true });
 
+    // Remove empty rows
+    let rows = parsed.data.filter(r => r.lieu && r.date);
+
+    // Parse and attach Date objects
+    rows.forEach(r => {
+      r._dateObj = parseCustomDate(r.date);
+    });
+
+    // Sort by date
+    rows.sort((a, b) => a._dateObj - b._dateObj);
+
     const points = [];
     const markers = [];
     const stepsContainer = document.getElementById('steps');
-    const rowsWithCoords = [];
+    stepsContainer.innerHTML = ""; // clear previous
 
-    for (let i = 0; i < parsed.data.length; i++) {
-      const row = parsed.data[i];
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
       const latlng = await geocode(row.lieu);
       if (!latlng) continue;
 
       points.push(latlng);
-
-      rowsWithCoords.push({
-        ...row,
-        lat: latlng[0],
-        lng: latlng[1]
-      });
+      row.lat = latlng[0];
+      row.lng = latlng[1];
 
       const icon = L.icon({
-        iconUrl: i === parsed.data.length-1 ? 'img/julien-current.png' : 'img/julien.png',
+        iconUrl: i === rows.length-1 ? 'img/julien-current.png' : 'img/julien.png',
         iconSize: [40, 40],
         className: 'rounded-icon'
       });
 
-      const marker = L.marker(latlng, { icon }).addTo(map).bindPopup(`<b>${row.titre}</b><br>${row.date}<br>${row.description}`);
+      const marker = L.marker(latlng, { icon })
+        .addTo(map)
+        .bindPopup(`<b>${row.titre}</b><br>${row.date}<br>${row.description}`);
       markers.push(marker);
 
       const stepDiv = document.createElement('div');
@@ -70,7 +79,7 @@ async function fetchAndRender() {
       map.fitBounds(points);
     }
 
-    calculateKPIs(rowsWithCoords);
+    calculateKPIs(rows);
 
   } catch (err) {
     console.error("❌ Error fetching or parsing CSV:", err);
@@ -83,20 +92,15 @@ function calculateKPIs(rows) {
   let totalDistance = 0;
   let countries = new Set();
 
-  // Parse first and last date
-  const firstDate = parseCustomDate(rows[0].date);
-  const lastDate = parseCustomDate(rows[rows.length - 1].date);
+  const firstDate = rows[0]._dateObj;
+  const lastDate = rows[rows.length - 1]._dateObj;
 
   for (let i = 0; i < rows.length; i++) {
     const country = rows[i].lieu.split(',').pop().trim();
     countries.add(country);
 
     if (i < rows.length - 1) {
-      const lat1 = rows[i].lat;
-      const lon1 = rows[i].lng;
-      const lat2 = rows[i + 1].lat;
-      const lon2 = rows[i + 1].lng;
-      totalDistance += haversineDistance(lat1, lon1, lat2, lon2);
+      totalDistance += haversineDistance(rows[i].lat, rows[i].lng, rows[i + 1].lat, rows[i + 1].lng);
     }
   }
 
@@ -108,17 +112,15 @@ function calculateKPIs(rows) {
 }
 
 function parseCustomDate(dateStr) {
-  // Try YYYY-MM-DD
-  let d = new Date(dateStr);
-  if (!isNaN(d)) return d;
-
-  // Try DD/MM/YYYY
   const parts = dateStr.split('/');
   if (parts.length === 3) {
-    return new Date(parts[2], parts[1] - 1, parts[0]);
+    // D/M/YYYY
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // 0-based
+    const year = parseInt(parts[2], 10);
+    return new Date(year, month, day);
   }
-
-  return new Date(); // fallback to today
+  return new Date(dateStr);
 }
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
