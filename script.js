@@ -41,7 +41,7 @@ async function fetchAndRender() {
       const icon = L.icon({
         iconUrl: i === rows.length - 1 ? 'img/julien-current.png' : 'img/julien.png',
         iconSize: [40, 40],
-        className: 'rounded-icon'
+        className: 'rounded-icon' // only markers get the border
       });
 
       const marker = L.marker(latlng, { icon }).addTo(map);
@@ -56,7 +56,7 @@ async function fetchAndRender() {
       marker.on('mouseover', function () {
         this.setIcon(L.icon({
           iconUrl: i === rows.length - 1 ? 'img/julien-current.png' : 'img/julien.png',
-          iconSize: [50, 50], // bigger on hover
+          iconSize: [50, 50],
           className: 'rounded-icon'
         }));
       });
@@ -64,7 +64,7 @@ async function fetchAndRender() {
       marker.on('mouseout', function () {
         this.setIcon(L.icon({
           iconUrl: i === rows.length - 1 ? 'img/julien-current.png' : 'img/julien.png',
-          iconSize: [40, 40], // normal size
+          iconSize: [40, 40],
           className: 'rounded-icon'
         }));
       });
@@ -124,7 +124,7 @@ async function fetchAndRender() {
         pulseColor: "#f1c40f"
       }).addTo(map);
 
-      // Transport icon at midpoint
+      // Transport icon at midpoint (no white border)
       if (iconUrl) {
         const midLat = (start[0] + end[0]) / 2;
         const midLng = (start[1] + end[1]) / 2;
@@ -133,6 +133,7 @@ async function fetchAndRender() {
             iconUrl: iconUrl,
             iconSize: [30, 30],
             iconAnchor: [15, 15]
+            // no className, so no white border
           })
         }).addTo(map);
       }
