@@ -21,38 +21,32 @@ async function fetchAndRender() {
     const parsed = Papa.parse(csvText, { header: true });
 
     const points = [];
-    const enrichedRows = []; // store original row + lat/lng
     const markers = [];
     const stepsContainer = document.getElementById('steps');
+    const rowsWithCoords = [];
 
     for (let i = 0; i < parsed.data.length; i++) {
       const row = parsed.data[i];
-      if (!row.lieu) continue;
-
       const latlng = await geocode(row.lieu);
       if (!latlng) continue;
 
-      // Store enriched row
-      enrichedRows.push({
+      points.push(latlng);
+
+      rowsWithCoords.push({
         ...row,
         lat: latlng[0],
         lng: latlng[1]
       });
 
-      points.push(latlng);
-
       const icon = L.icon({
-        iconUrl: i === parsed.data.length - 1 ? 'img/julien-current.png' : 'img/julien.png',
+        iconUrl: i === parsed.data.length-1 ? 'img/julien-current.png' : 'img/julien.png',
         iconSize: [40, 40],
         className: 'rounded-icon'
       });
 
-      const marker = L.marker(latlng, { icon })
-        .addTo(map)
-        .bindPopup(`<b>${row.titre}</b><br>${row.date}<br>${row.description}`);
+      const marker = L.marker(latlng, { icon }).addTo(map).bindPopup(`<b>${row.titre}</b><br>${row.date}<br>${row.description}`);
       markers.push(marker);
 
-      // Step list (no images)
       const stepDiv = document.createElement('div');
       stepDiv.className = 'step';
       stepDiv.innerHTML = `<h3>${row.titre}</h3><p>${row.date}</p><p>${row.description}</p>`;
@@ -65,7 +59,6 @@ async function fetchAndRender() {
       stepsContainer.appendChild(stepDiv);
     }
 
-    // Draw antPath line
     if (points.length > 1) {
       L.polyline.antPath(points, {
         color: "#c0392b",
@@ -77,8 +70,7 @@ async function fetchAndRender() {
       map.fitBounds(points);
     }
 
-    // ✅ Calculate KPIs
-    calculateKPIs(enrichedRows);
+    calculateKPIs(rowsWithCoords);
 
   } catch (err) {
     console.error("❌ Error fetching or parsing CSV:", err);
@@ -90,20 +82,21 @@ function calculateKPIs(rows) {
 
   let totalDistance = 0;
   let countries = new Set();
-  let firstDate = new Date(rows[0].date);
-  let lastDate = new Date(rows[rows.length - 1].date);
+
+  // Parse first and last date
+  const firstDate = parseCustomDate(rows[0].date);
+  const lastDate = parseCustomDate(rows[rows.length - 1].date);
 
   for (let i = 0; i < rows.length; i++) {
-    // Add country from "lieu"
     const country = rows[i].lieu.split(',').pop().trim();
     countries.add(country);
 
-    // Distance to next point
     if (i < rows.length - 1) {
-      totalDistance += haversineDistance(
-        rows[i].lat, rows[i].lng,
-        rows[i + 1].lat, rows[i + 1].lng
-      );
+      const lat1 = rows[i].lat;
+      const lon1 = rows[i].lng;
+      const lat2 = rows[i + 1].lat;
+      const lon2 = rows[i + 1].lng;
+      totalDistance += haversineDistance(lat1, lon1, lat2, lon2);
     }
   }
 
@@ -114,19 +107,34 @@ function calculateKPIs(rows) {
   document.getElementById('kpi-days').innerText = daysPassed;
 }
 
+function parseCustomDate(dateStr) {
+  // Try YYYY-MM-DD
+  let d = new Date(dateStr);
+  if (!isNaN(d)) return d;
+
+  // Try DD/MM/YYYY
+  const parts = dateStr.split('/');
+  if (parts.length === 3) {
+    return new Date(parts[2], parts[1] - 1, parts[0]);
+  }
+
+  return new Date(); // fallback to today
+}
+
 function haversineDistance(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const dLat = deg2rad(lat2 - lat1);
   const dLon = deg2rad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
     Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-    Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
 }
 
 function deg2rad(deg) {
-  return deg * (Math.PI / 180);
+  return deg * (Math.PI/180);
 }
 
 fetchAndRender();
