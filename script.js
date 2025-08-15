@@ -56,7 +56,7 @@ async function fetchAndRender() {
       marker.on('mouseover', function () {
         this.setIcon(L.icon({
           iconUrl: i === rows.length - 1 ? 'img/julien-current.png' : 'img/julien.png',
-          iconSize: [50, 50],
+          iconSize: [50, 50], // bigger on hover
           className: 'rounded-icon'
         }));
       });
@@ -64,7 +64,7 @@ async function fetchAndRender() {
       marker.on('mouseout', function () {
         this.setIcon(L.icon({
           iconUrl: i === rows.length - 1 ? 'img/julien-current.png' : 'img/julien.png',
-          iconSize: [40, 40],
+          iconSize: [40, 40], // normal size
           className: 'rounded-icon'
         }));
       });
@@ -83,24 +83,59 @@ async function fetchAndRender() {
       stepsContainer.appendChild(stepDiv);
     }
 
-    // Autofocus on the last step
-    if (markers.length > 0) {
-      const lastMarker = markers[markers.length - 1];
-      const lastStepDiv = stepsContainer.lastChild;
-      lastStepDiv.classList.add('active');
-      lastMarker.openPopup();
-      lastStepDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    // Draw transport lines with icons
+    for (let i = 0; i < rows.length - 1; i++) {
+      const start = [rows[i].lat, rows[i].lng];
+      const end = [rows[i + 1].lat, rows[i + 1].lng];
+      const transport = rows[i].transport?.toLowerCase();
 
-    if (points.length > 1) {
-      L.polyline.antPath(points, {
-        color: "#c0392b",
+      let color = "#7f8c8d"; // fallback gray
+      let dashArray = null;
+      let iconUrl = null;
+
+      switch (transport) {
+        case "bus":
+          color = "#f39c12";
+          dashArray = [5, 10];
+          iconUrl = "img/bus.svg";
+          break;
+        case "car":
+          color = "#e74c3c";
+          dashArray = null;
+          iconUrl = "img/car.svg";
+          break;
+        case "train":
+          color = "#27ae60";
+          dashArray = [10, 5];
+          iconUrl = "img/train.svg";
+          break;
+        case "boat":
+          color = "#2980b9";
+          dashArray = [15, 10];
+          iconUrl = "img/boat.svg";
+          break;
+      }
+
+      L.polyline.antPath([start, end], {
+        color: color,
         weight: 4,
         delay: 400,
-        dashArray: [15, 20],
+        dashArray: dashArray,
         pulseColor: "#f1c40f"
       }).addTo(map);
-      map.fitBounds(points);
+
+      // Transport icon at midpoint
+      if (iconUrl) {
+        const midLat = (start[0] + end[0]) / 2;
+        const midLng = (start[1] + end[1]) / 2;
+        L.marker([midLat, midLng], {
+          icon: L.icon({
+            iconUrl: iconUrl,
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+          })
+        }).addTo(map);
+      }
     }
 
     calculateKPIs(rows);
