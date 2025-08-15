@@ -1,6 +1,6 @@
 body {
   font-family: Arial, sans-serif;
-  background: #ffffff;
+  background: #fffdf8; /* lighter white cream background */
   color: #333;
   margin: 0;
   padding: 0;
@@ -20,7 +20,7 @@ h1 {
   width: 25%;
   display: flex;
   flex-direction: column;
-  background: #fff8e7;
+  background: #fff8e7; /* steps panel stays cream */
   padding: 10px;
   box-sizing: border-box;
   overflow-y: auto;
