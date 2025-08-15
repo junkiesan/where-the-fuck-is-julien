@@ -20,57 +20,28 @@ async function fetchAndRender() {
     const csvText = await res.text();
     const parsed = Papa.parse(csvText, { header: true });
 
-    let rows = parsed.data.filter(r => r.lieu && r.date);
-    rows.forEach(r => r._dateObj = parseCustomDate(r.date));
-    rows.sort((a, b) => a._dateObj - b._dateObj);
-
     const points = [];
     const markers = [];
     const stepsContainer = document.getElementById('steps');
-    stepsContainer.innerHTML = "";
 
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
+    for (let i = 0; i < parsed.data.length; i++) {
+      const row = parsed.data[i];
       const latlng = await geocode(row.lieu);
       if (!latlng) continue;
 
       points.push(latlng);
-      row.lat = latlng[0];
-      row.lng = latlng[1];
 
       const icon = L.icon({
-        iconUrl: i === rows.length - 1 ? 'img/julien-current.png' : 'img/julien.png',
+        iconUrl: i === parsed.data.length-1 ? 'img/julien-current.png' : 'img/julien.png',
         iconSize: [40, 40],
         className: 'rounded-icon'
       });
 
-      const marker = L.marker(latlng, { icon }).addTo(map);
-      if (i === rows.length - 1) {
-        marker.bindPopup(`<b>I'm here bitch</b>`);
-        marker.openPopup();
-      } else {
-        marker.bindPopup(`<b>${row.titre}</b><br>${row.date}<br>${row.description}`);
-      }
-
-      // Hover effect
-      marker.on('mouseover', function () {
-        this.setIcon(L.icon({
-          iconUrl: i === rows.length - 1 ? 'img/julien-current.png' : 'img/julien.png',
-          iconSize: [50, 50], // bigger on hover
-          className: 'rounded-icon'
-        }));
-      });
-
-      marker.on('mouseout', function () {
-        this.setIcon(L.icon({
-          iconUrl: i === rows.length - 1 ? 'img/julien-current.png' : 'img/julien.png',
-          iconSize: [40, 40], // normal size
-          className: 'rounded-icon'
-        }));
-      });
-
+      const marker = L.marker(latlng, { icon }).addTo(map)
+        .bindPopup(i === parsed.data.length-1 ? "I'm here bitch" : `<b>${row.titre}</b><br>${row.date}<br>${row.description}`);
       markers.push(marker);
 
+      // Step list
       const stepDiv = document.createElement('div');
       stepDiv.className = 'step';
       stepDiv.innerHTML = `<h3>${row.titre}</h3><p>${row.date}</p><p>${row.description}</p>`;
@@ -83,18 +54,23 @@ async function fetchAndRender() {
       stepsContainer.appendChild(stepDiv);
     }
 
+    // Focus on last step
+    if (markers.length > 0) {
+      const lastMarker = markers[markers.length - 1];
+      const lastStepDiv = stepsContainer.lastChild;
+      map.flyTo(points[points.length - 1], 8, { animate: true });
+      lastStepDiv.classList.add('active');
+      lastMarker.openPopup();
+      // Scroll sidebar to show last step
+      lastStepDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
     if (points.length > 1) {
-      L.polyline.antPath(points, {
-        color: "#c0392b",
-        weight: 4,
-        delay: 400,
-        dashArray: [15, 20],
-        pulseColor: "#f1c40f"
-      }).addTo(map);
+      L.polyline(points, { color: "#c0392b", weight: 4 }).addTo(map);
       map.fitBounds(points);
     }
 
-    calculateKPIs(rows);
+    calculateKPIs(parsed.data);
 
   } catch (err) {
     console.error("❌ Error fetching or parsing CSV:", err);
@@ -103,42 +79,47 @@ async function fetchAndRender() {
 
 function calculateKPIs(rows) {
   if (rows.length < 2) return;
+
   let totalDistance = 0;
   let countries = new Set();
-  const firstDate = rows[0]._dateObj;
-  const lastDate = rows[rows.length - 1]._dateObj;
+  const firstDate = parseDate(rows[0].date);
+  const lastDate = parseDate(rows[rows.length - 1].date);
 
   for (let i = 0; i < rows.length; i++) {
+    // Add country
     const country = rows[i].lieu.split(',').pop().trim();
     countries.add(country);
-    if (i < rows.length - 1) {
-      totalDistance += haversineDistance(rows[i].lat, rows[i].lng, rows[i + 1].lat, rows[i + 1].lng);
+
+    // Calculate distance to next step if lat/lng exists
+    if (i < rows.length - 1 && rows[i].lat && rows[i].lng && rows[i+1].lat && rows[i+1].lng) {
+      const lat1 = parseFloat(rows[i].lat);
+      const lon1 = parseFloat(rows[i].lng);
+      const lat2 = parseFloat(rows[i + 1].lat);
+      const lon2 = parseFloat(rows[i + 1].lng);
+      totalDistance += haversineDistance(lat1, lon1, lat2, lon2);
     }
   }
+
   const daysPassed = Math.ceil((lastDate - firstDate) / (1000 * 60 * 60 * 24));
+
   document.getElementById('kpi-distance').innerText = totalDistance.toFixed(0);
   document.getElementById('kpi-countries').innerText = countries.size;
   document.getElementById('kpi-days').innerText = daysPassed;
 }
 
-function parseCustomDate(dateStr) {
-  const parts = dateStr.split('/');
-  if (parts.length === 3) {
-    const day = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1;
-    const year = parseInt(parts[2], 10);
-    return new Date(year, month, day);
-  }
-  return new Date(dateStr);
+function parseDate(str) {
+  const [day, month, year] = str.split('/').map(Number);
+  return new Date(year, month - 1, day);
 }
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371;
+  const R = 6371; // Earth radius in KM
   const dLat = deg2rad(lat2 - lat1);
   const dLon = deg2rad(lon2 - lon1);
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   return R * c;
 }
