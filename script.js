@@ -150,6 +150,12 @@ async function fetchAndRender() {
       const lastMarker = markers[markers.length - 1];
       lastMarker.openPopup();
       map.flyTo([lastMarker.getLatLng().lat, lastMarker.getLatLng().lng], 8, { animate: true });
+
+      const stepDivs = document.querySelectorAll('.step');
+      if (stepDivs.length > 0) {
+        stepDivs.forEach(s => s.classList.remove('active'));
+        stepDivs[stepDivs.length - 1].classList.add('active');
+      }
     }
 
     calculateKPIs(rows);
